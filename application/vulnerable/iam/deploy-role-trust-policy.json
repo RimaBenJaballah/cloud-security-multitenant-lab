@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowPipelineUserFromDevToAssume",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::DEV_ACCOUNT_ID:user/sec-lab-pipeline-user-dev"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}

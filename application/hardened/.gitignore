@@ -1,0 +1,47 @@
+# =============================================================================
+# .gitignore for Cloud Security Lab — Phase 2 secured app
+# =============================================================================
+
+# Terraform state / local infra artifacts
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local environment files — never commit real secrets
+.env
+.env.local
+
+# Build artifacts
+dist/
+build/
+*.tar.gz
+.tmp/

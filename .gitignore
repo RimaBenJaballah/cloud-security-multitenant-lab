@@ -1,0 +1,39 @@
+# --- Terraform ---
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# --- Secrets / local env ---
+.env
+*.env
+!*.env.example
+**/.tmp/
+*.pem
+*.key
+credentials
+aws-credentials*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# --- Build artifacts ---
+*.zip
+build/
+dist/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

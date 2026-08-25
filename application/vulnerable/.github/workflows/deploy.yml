@@ -1,0 +1,148 @@
+# =============================================================================
+#  Cloud Security Lab — GitHub Actions Deployment Pipeline
+#  File: .github/workflows/deploy.yml
+# =============================================================================
+#
+#  ██╗    ██╗ █████╗ ██████╗ ███╗   ██╗██╗███╗   ██╗ ██████╗
+#  ██║    ██║██╔══██╗██╔══██╗████╗  ██║██║████╗  ██║██╔════╝
+#  ██║ █╗ ██║███████║██████╔╝██╔██╗ ██║██║██╔██╗ ██║██║  ███╗
+#  ██║███╗██║██╔══██║██╔══██╗██║╚██╗██║██║██║╚██╗██║██║   ██║
+#  ╚███╔███╔╝██║  ██║██║  ██║██║ ╚████║██║██║ ╚████║╚██████╔╝
+#   ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝ ╚═════╝
+#
+#  [VULN-PATH2-A] INTENTIONAL MISCONFIGURATION — CREDENTIAL EXPOSURE
+#  ──────────────────────────────────────────────────────────────────
+#  The AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY values below are
+#  hardcoded directly in this pipeline config file.
+#
+#  This file is committed to a PUBLIC GitHub repository.
+#  Even if these lines are later deleted, the credentials are PERMANENTLY
+#  visible in git history:
+#    git log --all --full-history -- .github/workflows/deploy.yml
+#    git show <any-commit-sha>:.github/workflows/deploy.yml
+#
+#  An attacker scans the public repo (or uses truffleHog / gitleaks),
+#  finds these credentials, and uses them to:
+#    1. Assume the Deploy Role cross-account into prod (sts:AssumeRole)
+#    2. Push a malicious container image to ECR
+#    3. Update the ECS service to run the malicious image
+#    4. Read every Secrets Manager secret via the Deploy Role's
+#       secretsmanager:GetSecretValue on * over-permission
+#
+#  [VULN-PATH2-B] IAM user instead of OIDC
+#  ─────────────────────────────────────────
+#  The pipeline authenticates with static long-lived IAM user credentials
+#  instead of GitHub's OIDC provider. OIDC would issue short-lived tokens
+#  scoped to the specific workflow run and tied to the GitHub repo identity.
+#  Static credentials can be used from anywhere, any time, indefinitely.
+#
+#  Secure fix:
+#    - Delete the IAM user and these hardcoded lines
+#    - Create an OIDC provider in AWS IAM for token.actions.githubusercontent.com
+#    - Update the Deploy Role trust policy to accept the OIDC subject claim
+#    - Use: aws-actions/configure-aws-credentials@v4 with role-to-assume
+# =============================================================================
+
+name: Build and Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION:     eu-west-3
+  ECR_REPOSITORY: sec-lab-api
+  ECS_CLUSTER:    sec-lab-cluster-prod
+  ECS_SERVICE:    sec-lab-service-prod
+
+  # [VULN-PATH2-A] INTENTIONAL: Static IAM user credentials hardcoded here.
+  # These belong to sec-lab-pipeline-user-dev in the dev account.
+  # DO NOT DO THIS IN REAL PIPELINES.
+  AWS_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE"
+  AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  DEPLOY_ROLE_ARN: arn:aws:iam::111111111111:role/sec-lab-deploy-role-prod
+ 
+ # [VULN-PATH2-B] The Deploy Role ARN in prod — assumed cross-account
+  # using the hardcoded IAM user credentials above.
+  # The trust policy has no MFA condition and no IP restriction,
+  # so any holder of the IAM user credentials can assume this role.
+
+jobs:
+  build-and-deploy:
+    name: Build, Push, Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Step 1 — Checkout source code
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Step 2 — Configure AWS credentials
+      # [VULN-PATH2-A] Uses hardcoded IAM user credentials from env vars above
+      # instead of GitHub OIDC federation.
+      # -----------------------------------------------------------------------
+      - name: Configure AWS credentials (IAM user — INSECURE)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # [VULN-PATH2-A] Static credentials from hardcoded env vars
+          aws-access-key-id:     ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+          # Assume the Deploy Role cross-account into prod
+          # [VULN-PATH2-B] Trust policy has no conditions — no MFA, no IP check
+          role-to-assume:        ${{ env.DEPLOY_ROLE_ARN }}
+          role-duration-seconds: 3600
+
+      # -----------------------------------------------------------------------
+      # Step 3 — Log in to Amazon ECR
+      # -----------------------------------------------------------------------
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # -----------------------------------------------------------------------
+      # Step 4 — Build and push Docker image to ECR
+      # -----------------------------------------------------------------------
+      - name: Build, tag, and push image to ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG:    ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # -----------------------------------------------------------------------
+      # Step 5 — Register new ECS task definition revision
+      # -----------------------------------------------------------------------
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition sec-lab-task-prod \
+            --query taskDefinition \
+            > task-definition.json
+
+      - name: Update ECS task definition with new image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name:  sec-lab-api
+          image:           ${{ steps.build-image.outputs.image }}
+
+      # -----------------------------------------------------------------------
+      # Step 6 — Deploy to ECS
+      # An attacker who has assumed the Deploy Role can inject a malicious image
+      # at step 4 and have it deployed here, replacing the legitimate container.
+      # -----------------------------------------------------------------------
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition:  ${{ steps.task-def.outputs.task-definition }}
+          service:          ${{ env.ECS_SERVICE }}
+          cluster:          ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

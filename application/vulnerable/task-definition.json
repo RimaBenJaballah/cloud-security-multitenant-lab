@@ -1,0 +1,68 @@
+{
+  "family": "sec-lab-task-prod",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::111111111111:role/sec-lab-task-role-prod",
+  "executionRoleArn": "arn:aws:iam::111111111111:role/sec-lab-execution-role-prod",
+  "runtimePlatform": {
+    "operatingSystemFamily": "LINUX",
+    "cpuArchitecture": "X86_64"
+  },
+  "containerDefinitions": [
+    {
+      "name": "sec-lab-api",
+      "image": "111111111111.dkr.ecr.eu-west-3.amazonaws.com/sec-lab-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "name": "http",
+          "appProtocol": "http"
+        }
+      ],
+      "environment": [
+        { "name": "AWS_REGION", "value": "eu-west-3" },
+        { "name": "APP_ENV", "value": "prod" },
+        { "name": "PORT", "value": "8080" },
+
+        { "name": "S3_BUCKET", "value": "sec-lab-data-prod-REPLACEME" },
+        { "name": "S3_TENANT_PREFIX_A", "value": "tenant-a/" },
+        { "name": "S3_TENANT_PREFIX_B", "value": "tenant-b/" },
+        { "name": "S3_TENANT_PREFIX_C", "value": "tenant-c/" },
+
+        { "name": "DB_HOST", "value": "sec-lab-db-prod.REPLACEME.eu-west-3.rds.amazonaws.com" },
+        { "name": "DB_NAME", "value": "tenantdb" },
+        { "name": "DB_PORT", "value": "5432" },
+
+        { "name": "TENANT_A_SECRET_ARN", "value": "arn:aws:secretsmanager:eu-west-3:111111111111:secret:tenant-a/api-key" },
+        { "name": "TENANT_B_SECRET_ARN", "value": "arn:aws:secretsmanager:eu-west-3:111111111111:secret:tenant-b/api-key" },
+        { "name": "TENANT_C_SECRET_ARN", "value": "arn:aws:secretsmanager:eu-west-3:111111111111:secret:tenant-c/api-key" }
+      ],
+      "secrets": [
+        {
+          "name": "DB_USER",
+          "valueFrom": "arn:aws:secretsmanager:eu-west-3:111111111111:secret:rds/credentials-XXXXXX:username::"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:eu-west-3:111111111111:secret:rds/credentials-XXXXXX:password::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/sec-lab-api",
+          "awslogs-region": "eu-west-3",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "false"
+        }
+      },
+      "readonlyRootFilesystem": false,
+      "stopTimeout": 30
+    }
+  ]
+}

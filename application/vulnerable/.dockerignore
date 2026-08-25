@@ -1,0 +1,43 @@
+# VCS
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+venv
+.venv
+env
+.env
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Docs / infra — must NOT ship inside the container image
+README.md
+docs
+infra
+terraform
+*.tf
+*.tfvars
+*.tfstate
+*.tfstate.*
+.terraform
+.terraform.lock.hcl
+
+# CI
+.github
+scripts
+iam
+
+# OS
+.DS_Store
+Thumbs.db

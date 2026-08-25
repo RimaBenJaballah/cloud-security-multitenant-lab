@@ -1,0 +1,53 @@
+# ============================================================================
+# .gitignore for sec-lab CI/CD repo
+# ============================================================================
+# IMPORTANT: .github/workflows/deploy.yml is NOT ignored on purpose. The
+# hardcoded IAM user credentials inside it are the Path 2 initial-access
+# vector per the project spec. The file must be committed to the public repo
+# so that `git log -p` reveals them to an attacker.
+# ============================================================================
+
+# Terraform state — local backend per project spec, never commit state.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env overrides (never commit real values, but the pipeline user creds
+# DO live in the workflow file by design).
+.env
+.env.local
+
+# Build artifacts
+dist/
+build/
+*.tar.gz
+.tmp/

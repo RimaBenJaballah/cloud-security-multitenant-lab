@@ -1,0 +1,32 @@
+# =============================================================================
+#  Cloud Security Lab — Python Dependencies
+# =============================================================================
+#
+#  IMPORTANT: lxml is pinned here intentionally.
+#  defusedxml is listed but NOT imported by the application — it is included
+#  only as a reference for the "secure fix" documented in app.py [VULN-1].
+#  The running application uses lxml with external entity resolution enabled.
+# =============================================================================
+
+# Web framework
+Flask==3.0.3
+Werkzeug==3.0.3
+gunicorn==22.0.0
+
+# AWS SDK
+boto3==1.34.131
+botocore==1.34.131
+
+# PostgreSQL driver
+psycopg2-binary==2.9.9
+
+# [VULN-1] Vulnerable XML parser — resolve_entities capable
+# DO NOT replace with defusedxml in the lab environment
+lxml==5.2.2
+
+# [VULN-1] Secure alternative (intentionally NOT used)
+# Included so students can swap it in as the remediation exercise
+defusedxml==0.7.1
+
+# Utilities
+python-dotenv==1.0.1
