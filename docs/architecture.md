@@ -2,7 +2,7 @@
 
 A cloud-native, multi-tenant data-ingestion platform on AWS. Tenants submit files through a public API; the platform authenticates each request, parses the file to extract metadata, stores the original in object storage, and records metadata in a database. The environment spans three AWS accounts to model a realistic separation of duties, and includes a dedicated detection layer.
 
-> All identifiers in this repo (account IDs, ARNs, bucket suffixes, endpoints) are sanitized placeholders.
+> All identifiers in the code and docs (account IDs, ARNs, bucket suffixes, endpoints) are sanitized placeholders.
 
 ![Architecture — multi-account cloud environment](screenshots/architecture-diagram.png)
 

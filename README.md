@@ -19,11 +19,11 @@ A three-account AWS environment written as modular Terraform (dev, prod, and an 
 
 A cross-account detection pipeline that I actually verified rather than just wired up. Testing it is how I caught F5: one wrong account ID that was silently dropping every log before it reached the alarms.
 
-Every finding fixed in code, so the before/after reads as a Terraform diff. Once the fixes are in, both attacks stop at their first step and the Security Hub score climbs.
+Every finding fixed in code, so the before/after reads as a Terraform diff. Once the fixes are in, both attacks stop at their first step.
 
 **Where this fits:** Cloud Security Engineer, Application Security, Detection Engineering, DevSecOps.
 
-> Educational lab. The `vulnerable/` code contains intentional misconfigurations, for study only. It is not meant to run in production or on the public internet, and every account ID, key, ARN, and endpoint in this repo is a sanitized placeholder.
+> Educational lab. The `vulnerable/` code contains intentional misconfigurations, for study only. It is not meant to run in production or on the public internet, and every account ID, key, ARN, and endpoint in the code and docs is a sanitized placeholder.
 
 ---
 
@@ -104,10 +104,7 @@ Added defense-in-depth: AWS WAF on the ALB, and a security-posture baseline (Gua
 ## Results
 
 - Both attack paths **fail at the first step** after remediation (documented in the remediation report).
-- Security Hub compliance score improved from the pre-remediation baseline to the post-remediation state.
 - The cross-account detection pipeline was verified end-to-end; alarms fire on the attack signatures and stay quiet otherwise.
-
-
 
 ## What I learned
 
