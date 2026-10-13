@@ -236,6 +236,5 @@ The three existing metric-filter alarms now publish to an SNS topic (with an ema
 | Path 2 Phase 2 (assume Deploy Role) | Fails — trust policy requires an OIDC token; leaked IAM keys are invalid |
 | Path 2 Phase 4 (mass secret read) | Fails — wildcard secrets policy deleted |
 | Detection chain | Verified end-to-end after F5 fix; alarms fire on attack signatures |
-| Security Hub score | Improved from pre-remediation baseline to post-remediation |
 
 ![Path 1 blocked after remediation](screenshots/remediation-path1-blocked.png)  ![Path 2 blocked after remediation](screenshots/remediation-path2-blocked.png)
